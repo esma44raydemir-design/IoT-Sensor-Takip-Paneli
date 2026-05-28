@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IoT Tabanlı Sensör Veri Takip ve Analiz Arayüzü - Gerçek zamanlı sıcaklık, nem, ışık ve basınç sensör verilerini izleyin.">
+    <title>IoT Sensör Takip Paneli</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="dark">
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-microchip"></i></div>
+                <div class="logo-text">
+                    <span class="logo-title">IoT Panel</span>
+                    <span class="logo-subtitle">Sensör Takip v2.0</span>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="nav-item active" data-page="dashboard">
+                    <a href="#"><i class="fas fa-th-large"></i><span>Gösterge Paneli</span></a>
+                </li>
+                <li class="nav-item" data-page="analytics">
+                    <a href="#"><i class="fas fa-chart-line"></i><span>Analiz</span></a>
+                </li>
+                <li class="nav-item" data-page="sensors">
+                    <a href="#"><i class="fas fa-satellite-dish"></i><span>Sensörler</span></a>
+                </li>
+                <li class="nav-item" data-page="alerts">
+                    <a href="#"><i class="fas fa-bell"></i><span>Uyarılar</span><span class="badge" id="alertBadge">0</span></a>
+                </li>
+                <li class="nav-item" data-page="data-table">
+                    <a href="#"><i class="fas fa-table"></i><span>Veri Tablosu</span></a>
+                </li>
+                <li class="nav-item" data-page="settings">
+                    <a href="#"><i class="fas fa-cog"></i><span>Ayarlar</span></a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot online"></span>
+                <span>Simülasyon Aktif</span>
+            </div>
+        </div>
+    </aside>
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <!-- ========== MAIN ========== -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+                <div class="page-info">
+                    <h1 id="pageTitle">Gösterge Paneli</h1>
+                    <p id="pageSubtitle">Sensör verilerinizi gerçek zamanlı izleyin</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="datetime" id="datetimeDisplay"></div>
+                <button class="btn-icon" id="themeToggle" title="Tema Değiştir"><i class="fas fa-sun"></i></button>
+                <button class="btn-icon" id="refreshBtn" title="Yenile"><i class="fas fa-sync-alt"></i></button>
+            </div>
+        </header>
+        <!-- ===== PAGE: DASHBOARD ===== -->
+        <section class="page active" id="page-dashboard">
+            <div class="sensor-cards">
+                <!-- Sıcaklık -->
+                <div class="sensor-card card-temp">
+                    <div class="card-top">
+                        <div class="card-icon temp-icon"><i class="fas fa-temperature-high"></i></div>
+                        <div class="card-status"><span class="dot-online"></span> Aktif</div>
+                    </div>
+                    <div class="card-value"><span id="valTemp">--</span><span class="unit">°C</span></div>
+                    <div class="card-label">Sıcaklık</div>
+                    <div class="card-trend" id="trendTemp"></div>
+                    <div class="card-minmax">
+                        <span>Min: <strong id="minTemp">--</strong></span>
+                        <span>Max: <strong id="maxTemp">--</strong></span>
+                    </div>
+                    <div class="sparkline-box"><canvas id="sparkTemp"></canvas></div>
+                </div>
+                <!-- Nem -->
+                <div class="sensor-card card-hum">
+                    <div class="card-top">
+                        <div class="card-icon hum-icon"><i class="fas fa-tint"></i></div>
+                        <div class="card-status"><span class="dot-online"></span> Aktif</div>
+                    </div>
+                    <div class="card-value"><span id="valHum">--</span><span class="unit">%</span></div>
+                    <div class="card-label">Nem</div>
+                    <div class="card-trend" id="trendHum"></div>
+                    <div class="card-minmax">
+                        <span>Min: <strong id="minHum">--</strong></span>
+                        <span>Max: <strong id="maxHum">--</strong></span>
+                    </div>
+                    <div class="sparkline-box"><canvas id="sparkHum"></canvas></div>
+                </div>
+                <!-- Işık -->
+                <div class="sensor-card card-light">
+                    <div class="card-top">
+                        <div class="card-icon light-icon"><i class="fas fa-sun"></i></div>
+                        <div class="card-status"><span class="dot-online"></span> Aktif</div>
+                    </div>
+                    <div class="card-value"><span id="valLight">--</span><span class="unit">lux</span></div>
+                    <div class="card-label">Işık Şiddeti</div>
+                    <div class="card-trend" id="trendLight"></div>
+                    <div class="card-minmax">
+                        <span>Min: <strong id="minLight">--</strong></span>
+                        <span>Max: <strong id="maxLight">--</strong></span>
+                    </div>
+                    <div class="sparkline-box"><canvas id="sparkLight"></canvas></div>
+                </div>
+                <!-- Basınç -->
+                <div class="sensor-card card-press">
+                    <div class="card-top">
+                        <div class="card-icon press-icon"><i class="fas fa-tachometer-alt"></i></div>
+                        <div class="card-status"><span class="dot-online"></span> Aktif</div>
+                    </div>
+                    <div class="card-value"><span id="valPress">--</span><span class="unit">hPa</span></div>
+                    <div class="card-label">Basınç</div>
+                    <div class="card-trend" id="trendPress"></div>
+                    <div class="card-minmax">
+                        <span>Min: <strong id="minPress">--</strong></span>
+                        <span>Max: <strong id="maxPress">--</strong></span>
+                    </div>
+                    <div class="sparkline-box"><canvas id="sparkPress"></canvas></div>
+                </div>
+            </div>
+            <!-- Ana Grafik -->
+            <div class="chart-panel">
+                <div class="chart-panel-header">
+                    <h2><i class="fas fa-chart-area"></i> Gerçek Zamanlı Sensör Verileri</h2>
+                    <div class="legend-row">
+                        <label><input type="checkbox" checked data-idx="0"><span class="lg-dot" style="background:#f97316"></span> Sıcaklık</label>
+                        <label><input type="checkbox" checked data-idx="1"><span class="lg-dot" style="background:#06b6d4"></span> Nem</label>
+                        <label><input type="checkbox" checked data-idx="2"><span class="lg-dot" style="background:#eab308"></span> Işık</label>
+                        <label><input type="checkbox" checked data-idx="3"><span class="lg-dot" style="background:#a855f7"></span> Basınç</label>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrap"><canvas id="mainChart"></canvas></div>
+            </div>
+            <!-- Alt Grafikler -->
+            <div class="chart-row-2">
+                <div class="chart-panel half">
+                    <div class="chart-panel-header"><h2><i class="fas fa-chart-pie"></i> Durum Dağılımı</h2></div>
+                    <div class="chart-canvas-wrap small"><canvas id="statusChart"></canvas></div>
+                </div>
+                <div class="chart-panel half">
+                    <div class="chart-panel-header"><h2><i class="fas fa-chart-bar"></i> Ortalama Değerler</h2></div>
+                    <div class="chart-canvas-wrap small"><canvas id="avgChart"></canvas></div>
+                </div>
+            </div>
+        </section>
+        <!-- ===== PAGE: ANALYTICS ===== -->
+        <section class="page" id="page-analytics">
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-database"></i></div><div><span class="stat-val" id="statReadings">0</span><span class="stat-lbl">Toplam Okuma</span></div></div>
+                <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-exclamation-triangle"></i></div><div><span class="stat-val" id="statAlerts">0</span><span class="stat-lbl">Toplam Uyarı</span></div></div>
+                <div class="stat-card"><div class="stat-icon green"><i class="fas fa-clock"></i></div><div><span class="stat-val" id="statUptime">%100</span><span class="stat-lbl">Çalışma Süresi</span></div></div>
+                <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-wifi"></i></div><div><span class="stat-val">4/4</span><span class="stat-lbl">Aktif Sensör</span></div></div>
+            </div>
+            <div class="chart-panel">
+                <div class="chart-panel-header"><h2><i class="fas fa-project-diagram"></i> Sıcaklık-Nem Korelasyonu</h2></div>
+                <div class="chart-canvas-wrap"><canvas id="corrChart"></canvas></div>
+            </div>
+            <div class="chart-panel">
+                <div class="chart-panel-header"><h2><i class="fas fa-wave-square"></i> Sensör Trend Analizi</h2></div>
+                <div class="chart-canvas-wrap"><canvas id="trendChart"></canvas></div>
+            </div>
+        </section>
+        <!-- ===== PAGE: SENSORS ===== -->
+        <section class="page" id="page-sensors">
+            <div class="sensors-grid">
+                <div class="sensor-detail"><div class="sd-head temp-bg"><i class="fas fa-temperature-high"></i><h3>DHT22 - Sıcaklık</h3></div><div class="sd-body"><div class="sd-row"><span>Sensör ID</span><span>SENS-TMP-001</span></div><div class="sd-row"><span>Aralık</span><span>-40°C ~ +80°C</span></div><div class="sd-row"><span>Hassasiyet</span><span>±0.5°C</span></div><div class="sd-row"><span>Durum</span><span class="status-ok"><span class="dot-online"></span> Aktif</span></div><div class="sd-row"><span>Son Güncelleme</span><span id="sensorUpdateTemp">--</span></div><div class="gauge"><div class="gauge-track"><div class="gauge-fill temp-fill" id="gaugeTemp"></div></div><div class="gauge-labels"><span>-40°C</span><span id="gaugeLblTemp">--</span><span>80°C</span></div></div></div></div>
+                <div class="sensor-detail"><div class="sd-head hum-bg"><i class="fas fa-tint"></i><h3>DHT22 - Nem</h3></div><div class="sd-body"><div class="sd-row"><span>Sensör ID</span><span>SENS-HUM-001</span></div><div class="sd-row"><span>Aralık</span><span>0% ~ 100% RH</span></div><div class="sd-row"><span>Hassasiyet</span><span>±2% RH</span></div><div class="sd-row"><span>Durum</span><span class="status-ok"><span class="dot-online"></span> Aktif</span></div><div class="sd-row"><span>Son Güncelleme</span><span id="sensorUpdateHum">--</span></div><div class="gauge"><div class="gauge-track"><div class="gauge-fill hum-fill" id="gaugeHum"></div></div><div class="gauge-labels"><span>0%</span><span id="gaugeLblHum">--</span><span>100%</span></div></div></div></div>
+                <div class="sensor-detail"><div class="sd-head light-bg"><i class="fas fa-sun"></i><h3>BH1750 - Işık</h3></div><div class="sd-body"><div class="sd-row"><span>Sensör ID</span><span>SENS-LGT-001</span></div><div class="sd-row"><span>Aralık</span><span>1 ~ 65535 lux</span></div><div class="sd-row"><span>Hassasiyet</span><span>±1 lux</span></div><div class="sd-row"><span>Durum</span><span class="status-ok"><span class="dot-online"></span> Aktif</span></div><div class="sd-row"><span>Son Güncelleme</span><span id="sensorUpdateLight">--</span></div><div class="gauge"><div class="gauge-track"><div class="gauge-fill light-fill" id="gaugeLight"></div></div><div class="gauge-labels"><span>0</span><span id="gaugeLblLight">--</span><span>2000 lux</span></div></div></div></div>
+                <div class="sensor-detail"><div class="sd-head press-bg"><i class="fas fa-tachometer-alt"></i><h3>BMP280 - Basınç</h3></div><div class="sd-body"><div class="sd-row"><span>Sensör ID</span><span>SENS-PRS-001</span></div><div class="sd-row"><span>Aralık</span><span>300 ~ 1100 hPa</span></div><div class="sd-row"><span>Hassasiyet</span><span>±1 hPa</span></div><div class="sd-row"><span>Durum</span><span class="status-ok"><span class="dot-online"></span> Aktif</span></div><div class="sd-row"><span>Son Güncelleme</span><span id="sensorUpdatePress">--</span></div><div class="gauge"><div class="gauge-track"><div class="gauge-fill press-fill" id="gaugePress"></div></div><div class="gauge-labels"><span>950</span><span id="gaugeLblPress">--</span><span>1050 hPa</span></div></div></div></div>
+            </div>
+        </section>
+        <!-- ===== PAGE: ALERTS ===== -->
+        <section class="page" id="page-alerts">
+            <div class="alerts-toolbar">
+                <div class="filter-btns">
+                    <button class="fbtn active" data-filter="all">Tümü</button>
+                    <button class="fbtn" data-filter="critical">Kritik</button>
+                    <button class="fbtn" data-filter="warning">Uyarı</button>
+                    <button class="fbtn" data-filter="info">Bilgi</button>
+                </div>
+                <div class="alerts-actions">
+                    <button class="btn secondary" id="btnClearAlerts"><i class="fas fa-trash-alt"></i> Temizle</button>
+                    <button class="btn primary" id="btnExportAlerts"><i class="fas fa-download"></i> İndir</button>
+                </div>
+            </div>
+            <div class="alerts-list" id="alertsList">
+                <div class="empty-state"><i class="fas fa-check-circle"></i><p>Henüz uyarı yok</p></div>
+            </div>
+        </section>
+        <!-- ===== PAGE: DATA TABLE ===== -->
+        <section class="page" id="page-data-table">
+            <div class="table-toolbar">
+                <div class="search-wrap"><i class="fas fa-search"></i><input type="text" id="tableSearch" placeholder="Tabloda ara..."></div>
+                <div class="table-btns">
+                    <button class="btn primary" id="btnCSV"><i class="fas fa-file-csv"></i> CSV</button>
+                    <button class="btn secondary" id="btnJSON"><i class="fas fa-file-code"></i> JSON</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th data-col="id"># <i class="fas fa-sort"></i></th>
+                            <th data-col="timestamp">Zaman <i class="fas fa-sort"></i></th>
+                            <th data-col="temperature">Sıcaklık <i class="fas fa-sort"></i></th>
+                            <th data-col="humidity">Nem <i class="fas fa-sort"></i></th>
+                            <th data-col="light">Işık <i class="fas fa-sort"></i></th>
+                            <th data-col="pressure">Basınç <i class="fas fa-sort"></i></th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <div class="table-footer">
+                <span id="tableInfo">0 kayıt</span>
+                <div class="paging" id="paging"></div>
+            </div>
+        </section>
+        <!-- ===== PAGE: SETTINGS ===== -->
+        <section class="page" id="page-settings">
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <h3><i class="fas fa-sliders-h"></i> Eşik Değerleri</h3>
+                    <div class="field"><label>Sıcaklık Alt (°C)</label><input type="number" id="setTempMin" value="15"></div>
+                    <div class="field"><label>Sıcaklık Üst (°C)</label><input type="number" id="setTempMax" value="35"></div>
+                    <div class="field"><label>Nem Alt (%)</label><input type="number" id="setHumMin" value="30"></div>
+                    <div class="field"><label>Nem Üst (%)</label><input type="number" id="setHumMax" value="70"></div>
+                    <div class="field"><label>Işık Alt (lux)</label><input type="number" id="setLightMin" value="100"></div>
+                    <div class="field"><label>Işık Üst (lux)</label><input type="number" id="setLightMax" value="800"></div>
+                </div>
+                <div class="settings-card">
+                    <h3><i class="fas fa-clock"></i> Güncelleme</h3>
+                    <div class="field"><label>Güncelleme Aralığı (sn)</label><input type="number" id="setInterval" value="3" min="1" max="30"></div>
+                    <div class="field"><label>Max Grafik Noktası</label><input type="number" id="setMaxPoints" value="50" min="10" max="200"></div>
+                    <div class="field"><label>Veri Saklama (kayıt)</label><input type="number" id="setRetention" value="500" min="50" max="5000"></div>
+                    <div class="field toggle-field"><label>Simülasyon Modu</label><label class="toggle"><input type="checkbox" id="setSimulation" checked><span class="slider"></span></label></div>
+                </div>
+                <div class="settings-card">
+                    <h3><i class="fas fa-palette"></i> Görünüm</h3>
+                    <div class="field toggle-field"><label>Karanlık Tema</label><label class="toggle"><input type="checkbox" id="setDarkMode" checked><span class="slider"></span></label></div>
+                    <div class="field toggle-field"><label>Sesli Uyarılar</label><label class="toggle"><input type="checkbox" id="setSound"><span class="slider"></span></label></div>
+                </div>
+                <div class="settings-card about-card">
+                    <div class="about-icon"><i class="fas fa-microchip"></i></div>
+                    <h4>IoT Sensör Takip Paneli</h4>
+                    <p>Versiyon 2.0</p>
+                    <p class="about-desc">IoT tabanlı sensör verilerinin gerçek zamanlı izlenmesi ve analiz edilmesi için geliştirilmiştir.</p>
+                    <div class="tags"><span>HTML5</span><span>CSS3</span><span>JavaScript</span><span>Chart.js</span></div>
+                </div>
+            </div>
+            <div class="settings-actions">
+                <button class="btn primary" id="btnSaveSettings"><i class="fas fa-save"></i> Kaydet</button>
+                <button class="btn secondary" id="btnResetSettings"><i class="fas fa-undo"></i> Sıfırla</button>
+            </div>
+        </section>
+    </main>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    <script src="script.js"></script>
+</body>
+</html>
