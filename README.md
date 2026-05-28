@@ -1,4 +1,3 @@
-Sağladığınız kaynak kodlara (HTML, CSS ve JavaScript) dayanarak projeniz için kapsamlı, profesyonel ve modern bir `README.md` şablonu hazırladım. Bu metni kopyalayıp projenizin dizinine `README.md` adıyla kaydedebilirsiniz.
 
 ---
 
